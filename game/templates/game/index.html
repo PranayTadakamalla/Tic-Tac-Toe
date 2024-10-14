@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        .header {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .status-message {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        .winner-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: white;
+            border: 2px solid #333;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        .play-again {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .play-again:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        Player 1 - X <br>
+        Player 2 - O
+    </div>
+
+    <div class="status-message" id="status-message">
+        Player 1's turn (X)
+    </div>
+
+    <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+
+    <button class="play-again" id="play-again" onclick="resetGame()">Play Again</button>
+
+    <script>
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        const boardElement = document.getElementById('board');
+        const cells = document.querySelectorAll('.cell');
+        const statusMessage = document.getElementById('status-message');
+        const playAgainButton = document.getElementById('play-again');
+
+        cells.forEach(cell => {
+            cell.addEventListener('click', function () {
+                const index = this.getAttribute('data-index');
+                if (board[index] === '' && !gameOver()) {
+                    makeMove(index, currentPlayer);
+                }
+            });
+        });
+
+        function makeMove(position, player) {
+            fetch(`/make_move/?position=${position}&player=${player}&board=${board}`)
+                .then(response => response.json())
+                .then(data => {
+                    board = data.board;
+                    cells.forEach((cell, i) => {
+                        cell.innerHTML = board[i];
+                    });
+
+                    if (data.winner) {
+                        statusMessage.innerText = `Player ${data.winner === 'X' ? '1' : '2'} wins!`;
+                        showEndGame();
+                    } else if (board.every(cell => cell !== '')) {
+                        statusMessage.innerText = `It's a draw!`;
+                        showEndGame();
+                    } else {
+                        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                        statusMessage.innerText = `Player ${currentPlayer === 'X' ? '1' : '2'}'s turn (${currentPlayer})`;
+                    }
+                });
+        }
+
+        function showEndGame() {
+            playAgainButton.style.display = 'block';
+        }
+
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            cells.forEach(cell => cell.innerHTML = '');
+            statusMessage.innerText = `Player 1's turn (X)`;
+            currentPlayer = 'X';
+            playAgainButton.style.display = 'none';
+        }
+
+        function gameOver() {
+            return board.every(cell => cell !== '') || statusMessage.innerText.includes('wins');
+        }
+    </script>
+
+</body>
+</html>
